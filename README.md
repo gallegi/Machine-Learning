@@ -1,2 +1,2 @@
-# Computer-vision
-Some trials of Computer vision using machine learning and deep learning
+# Machine Learning
+This repository contains code of Machine Learning algorithm and some exploration about Data Science
