@@ -1,0 +1,449 @@
+
+#include "opencv2/imgcodecs.hpp"
+#include "opencv2/imgproc.hpp"
+#include "opencv2/highgui.hpp"
+#include <iostream>
+#include <fstream>
+#include <set>
+#include <vector>
+
+#include "caffe_dnn.cpp"
+
+using namespace std;
+using namespace cv;
+Mat blue_detector(Mat input);
+Mat white_detector(Mat input);
+Mat red_detector(Mat input);
+Mat green_detector(Mat input);
+Mat draw_contours(Mat input, Mat raw, bool isRed, vector<Mat>& detected_imgs);
+Mat ROI(Mat src, int x, int y, int width, int height);
+vector<Mat> frame_processing(Mat src);
+vector<Mat> draw_contour(Mat input, Mat raw, bool isRed);
+bool checked(int x, int y, int width, int height, Mat input);
+void display(Mat src);
+void extract(String prefix);
+void test_process();
+int evaluate_frame(Mat frame);
+static void onMouse(int event, int x, int y, int f, void*);
+void whitening_object(Mat& frame, Rect bounding_rect);
+
+int mode;
+int SENTIVITY = 10;
+String VIDEO_DIR = "";
+String extracted_folder = "extracted/1/";
+String extracted_prefix = "1";
+
+int counter = 0;
+string pre_label = "";
+int stack_times = 0;
+double std_cnfdnce = 0.9;
+
+Mat src;
+int frame_index = 0;
+int start_frame = 0;
+
+int main(int argc, char** argv) {
+    mode = atoi(argv[1]);
+    VIDEO_DIR = argv[2];
+    start_frame = atoi(argv[3]);
+
+    test_process();
+
+    //extract(extracted_prefix);
+    return 0;
+}
+
+static void onMouse(int event, int x, int y, int f, void*) {
+    Mat image = src.clone();
+    Vec3b rgb = image.at<Vec3b>(y, x);
+    int B = rgb.val[0];
+    int G = rgb.val[1];
+    int R = rgb.val[2];
+
+    Mat HLS;
+    Mat RGB = image(Rect(x, y, 1, 1));
+    cvtColor(RGB, HLS, CV_BGR2HLS);
+    Vec3b hls = HLS.at<Vec3b>(0, 0);
+    int _H = hls.val[0];
+    int _L = hls.val[1];
+    int _S = hls.val[2];
+
+    Mat HSV;
+    cvtColor(RGB, HSV, CV_BGR2HSV);
+    Vec3b hsv = HSV.at<Vec3b>(0, 0);
+    int H = hsv.val[0];
+    int S = hsv.val[1];
+    int V = hsv.val[2];
+
+    char name[30];
+    //    sprintf(name, "B=%d", B);
+    //    putText(image, name, Point(150, 40), FONT_HERSHEY_SIMPLEX, .7, Scalar(0, 255, 0), 2, 8, false);
+    //
+    //    sprintf(name, "G=%d", G);
+    //    putText(image, name, Point(150, 80), FONT_HERSHEY_SIMPLEX, .7, Scalar(0, 255, 0), 2, 8, false);
+    //
+    //    sprintf(name, "R=%d", R);
+    //    putText(image, name, Point(150, 120), FONT_HERSHEY_SIMPLEX, .7, Scalar(0, 255, 0), 2, 8, false);
+
+    sprintf(name, "H=%d", H);
+    putText(image, name, Point(25, 40), FONT_HERSHEY_SIMPLEX, .7, Scalar(0, 255, 0), 2, 8, false);
+
+    sprintf(name, "S=%d", S);
+    putText(image, name, Point(25, 80), FONT_HERSHEY_SIMPLEX, .7, Scalar(0, 255, 0), 2, 8, false);
+
+    sprintf(name, "V=%d", V);
+    putText(image, name, Point(25, 120), FONT_HERSHEY_SIMPLEX, .7, Scalar(0, 255, 0), 2, 8, false);
+
+    sprintf(name, "H=%d", _H);
+    putText(image, name, Point(150, 40), FONT_HERSHEY_SIMPLEX, .7, Scalar(0, 255, 0), 2, 8, false);
+
+    sprintf(name, "L=%d", _L);
+    putText(image, name, Point(150, 80), FONT_HERSHEY_SIMPLEX, .7, Scalar(0, 255, 0), 2, 8, false);
+
+    sprintf(name, "S=%d", _S);
+    putText(image, name, Point(150, 120), FONT_HERSHEY_SIMPLEX, .7, Scalar(0, 255, 0), 2, 8, false);
+
+    sprintf(name, "X=%d", x);
+    putText(image, name, Point(25, 300), FONT_HERSHEY_SIMPLEX, .7, Scalar(0, 0, 255), 2, 8, false);
+
+    sprintf(name, "Y=%d", y);
+    putText(image, name, Point(25, 340), FONT_HERSHEY_SIMPLEX, .7, Scalar(0, 0, 255), 2, 8, false);
+
+    sprintf(name, "c=%d", frame_index);
+    putText(image, name, Point(150, 200), FONT_HERSHEY_SIMPLEX, .7, Scalar(0, 0, 255), 2, 8, false);
+
+    //imwrite("hsv.jpg",image);
+
+    imshow("video", image);
+
+}
+
+vector<Mat> frame_processing(Mat src) {
+    Mat dst;
+    Mat blue;
+    Mat red;
+    vector<Mat> res;
+    vector<Mat> tmp;
+
+    dst = white_detector(src);
+    blue = blue_detector(src);
+    red = red_detector(src);
+    GaussianBlur(red, red, Size(3, 3), 0, 0);
+
+    addWeighted(dst, 1, blue, 1, 0.0, dst);
+    GaussianBlur(dst, dst, Size(3, 3), 0, 0);
+    res = draw_contour(dst, src, false);
+    tmp = draw_contour(red, src, true);
+    for (int i = 0; i < tmp.size(); i++) {
+        res.push_back(tmp[i]);
+    }
+    return res;
+}
+
+vector<Mat> draw_contour(Mat input, Mat raw, bool isRed) {
+    vector<vector<Point> > cnts;
+    vector<Vec4i> hierarchy;
+    vector<Mat> res;
+
+    findContours(input, cnts, hierarchy, RETR_EXTERNAL, 1, Point(0, 0));
+    for (int i = 0; i < cnts.size(); i++) {
+        vector<Point> cnt = cnts[i];
+        Rect rect = boundingRect(cnt);
+        int height = rect.height;
+        int width = rect.width;
+        if (contourArea(cnt) > 100 && abs(width - height) < 3) {
+            int x = rect.x;
+            int y = rect.y;
+            if (!checked(x, y, width, height, raw) && !isRed) {
+                continue;
+            }
+            if (width < 40 || height < 40) continue;
+            res.push_back(ROI(raw, x, y, width, height));
+            //            rectangle(raw,Point(x,y),Point(x+width,y+height),Scalar(0,0,255),1);
+        }
+    }
+    return res;
+}
+
+Mat frame_process(Mat src, vector<Mat>& detected_imgs) {
+    Mat dst;
+    Mat blue;
+    Mat red;
+	Mat green;
+
+    dst = white_detector(src);
+    blue = blue_detector(src);
+    red = red_detector(src);
+	green = green_detector(src);
+    GaussianBlur(red, red, Size(3, 3), 0, 0);
+
+    addWeighted(dst, 1, blue, 1, 0.0, dst);
+    GaussianBlur(dst, dst, Size(3, 3), 0, 0);
+    dst = draw_contours(dst, src, false, detected_imgs);
+    dst = draw_contours(red, dst, true, detected_imgs);
+	dst = draw_contours(green, dst, true, detected_imgs);
+    return dst;
+}
+
+int evaluate_frame(Mat frame) {
+    Mat dst;
+    vector<Mat> detected_imgs;
+    int int_label = -1;
+
+    dst = frame_process(frame, detected_imgs);
+
+    //get max label
+    double max_confidence = 0;
+    Prediction p_max;
+    for (int i = 0; i < detected_imgs.size(); i++) {
+        Prediction p = getLabel(detected_imgs[i]);
+        if (p.second > max_confidence) {
+            p_max = p;
+            max_confidence = p_max.second;
+        }
+    }
+
+
+
+    //increase counter if pre_label = current label (p_max.first)
+    if (p_max.first == pre_label) {
+        counter++;
+    } else {
+        counter = 0;
+    }
+
+    pre_label = p_max.first;
+    //cout <<counter <<"--------"<<endl;
+    if (counter >= stack_times) {
+        if (p_max.first == "0 turn_left_ahead" && p_max.second >= std_cnfdnce) {
+            int_label = 0;
+            cout << "label: " << p_max.first << "    confdn: " << p_max.second << endl;
+        } else if (p_max.first == "1 turn_right_ahead" && p_max.second >= std_cnfdnce) {
+            int_label = 1;
+            cout << "label: " << p_max.first << "    confdn: " << p_max.second << endl;
+        } else if (p_max.first == "2 o_blue" && p_max.second >= std_cnfdnce) {
+            int_label = 2;
+            //whitening_object(frame, )
+            cout << "label: " << p_max.first << "    confdn: " << p_max.second << endl;
+        } else if (p_max.first == "3 o_red" && p_max.second >= std_cnfdnce) {
+            int_label = 3;
+            cout << "label: " << p_max.first << "    confdn: " << p_max.second << endl;
+        }
+
+        counter = 0;
+        //cout << "-------: "<<p_max.second <<endl;
+
+    }
+
+
+    char quit;
+
+    if (frame_index >= start_frame) {
+        imshow("video", dst);
+        setMouseCallback("video", onMouse, 0);
+        quit = waitKey(40);
+    } else {
+        quit = waitKey(1);
+    }
+
+    if (quit == 's') {
+        waitKey(0);
+    }
+
+    return int_label;
+}
+
+void test_process() {
+    VideoCapture cap;
+
+    if (mode == 0) {
+        cap = VideoCapture(0);
+    } else {
+        cap = VideoCapture(VIDEO_DIR);
+    }
+
+    char quit = 1;
+    while (quit != 27) {
+        Mat frame;
+        cap >> frame;
+        src = frame;
+        frame_index++;
+
+        if(frame_index < start_frame){
+            continue;
+        }
+
+        int start = getTickCount();
+        int label = evaluate_frame(frame);
+        int end = getTickCount();
+        cout << "FPS: " <<getTickFrequency()/(start-end)<<endl;
+    }
+
+
+
+}
+
+void extract(String prefix) {
+    VideoCapture cap;
+    if (mode == 0) {
+        cap = VideoCapture(0);
+    } else {
+        cap = VideoCapture(VIDEO_DIR);
+    }
+
+
+    //VideoWriter writer;
+    //writer.open("saved.avi", CV_FOURCC('M', 'J', 'P', 'G'), 10, Size(320, 240));
+    char quit = 1;
+    int count = 0;
+    while (quit != 27) {
+        Mat frame;
+        cap >> frame;
+        vector<Mat> tmp;
+        tmp = frame_processing(frame);
+        for (int i = 0; i < tmp.size(); i++) {
+            count++;
+            String sNum;
+            stringstream covert;
+            covert << count;
+            sNum = covert.str();
+            String fileName = extracted_folder + prefix + "_" + sNum + ".png";
+
+            imwrite(fileName, tmp[i]);
+            //            display(tmp[i]);
+        }
+        //        imshow("video",frame);
+        quit = waitKey(1);
+    }
+    //writer.release();
+    cout << "OK";
+}
+
+Mat blue_detector(Mat input) {
+    Mat hsv_img;
+
+    cv::cvtColor(input, hsv_img, cv::COLOR_BGR2HSV);
+
+    Mat dst;
+
+    cv::inRange(hsv_img,Scalar(100,190,170),Scalar(130,255,255),dst);
+	//cv::inRange(hsv_img,Scalar(110,50,50),Scalar(130,255,255),dst);
+    //cv::inRange(hsv_img, Scalar(90, 100, 90), Scalar(130, 255, 255), dst);
+    return dst;
+}
+
+Mat white_detector(Mat input) {
+    Mat hls_img;
+
+    cv::cvtColor(input, hls_img, cv::COLOR_BGR2HLS);
+
+    Mat dst;
+    //cv::inRange(hsv_img,Scalar(0,0,0),Scalar(255,255,255),dst);
+    //cv::inRange(hsv_img, Scalar(0, 100, 0), Scalar(255, 255, 255), dst);
+    //cv::inRange(hsv_img, Scalar(85, 5, 240), Scalar(95, 25, 255), dst);
+ cv::inRange(hls_img, Scalar(90, 229, 240), Scalar(115, 260, 255), dst);
+    return dst;
+}
+
+Mat red_detector(Mat input) {
+    Mat hsv_img;
+
+    cv::cvtColor(input, hsv_img, cv::COLOR_BGR2HSV);
+
+    Mat dst;
+
+    cv::inRange(hsv_img, Scalar(0, 150, 200), Scalar(10, 240, 255), dst);
+    return dst;
+}
+
+Mat green_detector(Mat input) {
+    Mat hsv_img;
+
+    cv::cvtColor(input, hsv_img, cv::COLOR_BGR2HSV);
+
+    Mat dst;
+
+    cv::inRange(hsv_img, Scalar(60, 150, 70), Scalar(80, 200, 190), dst);
+    return dst;
+}
+
+bool checked(int x, int y, int width, int height, Mat input) {
+
+    Mat checkMatrix = Mat::zeros(Size(width, height), CV_8U);
+    Mat croped = ROI(input, x, y, width, height);
+    Mat filted = white_detector(croped);
+    float sum = 0;
+    bool haveBlue = false;
+    bool haveWhite = false;
+
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            if (filted.at<uchar>(i, j) == 255) {
+                sum--;
+                haveWhite = true;
+            }
+        }
+    }
+
+    filted = blue_detector(croped);
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            if (filted.at<uchar>(i, j) == 255) {
+                sum++;
+                haveBlue = true;
+            }
+        }
+    }
+    sum = sum / (height * width);
+
+    //    display(croped);
+    if (haveBlue && haveWhite && sum > 0.2) {
+
+        return true;
+    }
+    return false;
+}
+
+Mat draw_contours(Mat input, Mat raw, bool isRed, vector<Mat>& detected_imgs) {
+    Mat dst;
+    vector<vector<Point> > cnts;
+    vector<Vec4i> hierarchy;
+
+    findContours(input, cnts, hierarchy, RETR_EXTERNAL, 1, Point(0, 0));
+    for (int i = 0; i < cnts.size(); i++) {
+        vector<Point> cnt = cnts[i];
+        Rect rect = boundingRect(cnt);
+        int height = rect.height;
+        int width = rect.width;
+        int area = width * height;
+        if (area > 100 && abs(width - height) < 20) {
+            int x = rect.x;
+            int y = rect.y;
+            if (!checked(x, y, width, height, raw) && !isRed) {
+                continue;
+            }
+            rectangle(raw, Point(x, y), Point(x + width, y + height), Scalar(0, 255, 0), 3);
+            detected_imgs.push_back(ROI(raw, x, y, width, height));
+            area = width * height;
+            //cout <<"Area: "<< area <<endl;
+        }
+
+
+    }
+    //current_detected_img = detected_imgs;
+    return raw;
+}
+
+Mat ROI(Mat src, int x, int y, int width, int height) {
+    return src(Rect(x, y, width, height));
+}
+
+void display(Mat src) {
+    imshow("SRC", src);
+    waitKey(0);
+    destroyAllWindows();
+}
+
+void whitening_object(Mat& frame, Rect bounding_rect) {
+    rectangle(frame, bounding_rect, Scalar(255, 255, 255), -1);
+}

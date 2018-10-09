@@ -1,0 +1,9 @@
+Link datacamp: Recommender system
+https://campus.datacamp.com/courses/recommendation-engines-in-pyspark/recommendations-are-everywhere?ex=2
+https://campus.datacamp.com/courses/introduction-to-pyspark/getting-to-know-pyspark?ex=1
+
+# make a slave
+export SPARK_HOME=/usr/local/spark
+
+sudo $SPARK_HOME/sbin/start-slave.sh spark://192.168.178.233:7077 -h 192.168.178.232 -p 7078 --webui-port 8082 -c 2 -m 1024m
+
