@@ -1,0 +1,618 @@
+{
+  "cells": [
+    {
+      "metadata": {
+        "_uuid": "8f2839f25d086af736a60e9eeb907d3b93b6e0e5",
+        "_cell_guid": "b1076dfc-b9ad-4769-8c92-a6c4dae69d19",
+        "trusted": true
+      },
+      "cell_type": "code",
+      "source": "# This Python 3 environment comes with many helpful analytics libraries installed\n# It is defined by the kaggle/python docker image: https://github.com/kaggle/docker-python\n# For example, here's several helpful packages to load in \n\nimport numpy as np # linear algebra\nimport pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)\n\n# Input data files are available in the \"../input/\" directory.\n# For example, running this (by clicking run or pressing Shift+Enter) will list the files in the input directory\n\nimport os\nprint(os.listdir(\"../input\"))\n\nfrom pyspark.ml.feature import OneHotEncoder, VectorAssembler, StringIndexer\nfrom pyspark.ml import Pipeline\n\nfrom pyspark.ml.classification import DecisionTreeClassifier, LogisticRegression, LinearSVC\nimport pyspark.ml.tuning as tune\nimport pyspark.ml.evaluation as evals\n\nfrom pyspark.sql import SparkSession\nimport pyspark.sql.functions as fn\n\n# Any results you write to the current directory are saved as output.",
+      "execution_count": 271,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": "['bigml_59c28831336c6604c800002a.csv']\n",
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "_cell_guid": "79c7e3d0-c299-4dcb-8224-4455121ee9b0",
+        "_uuid": "d629ff2d2480ee46fbb7e2d37f6b5fab8052498a",
+        "trusted": true
+      },
+      "cell_type": "code",
+      "source": "spark = SparkSession.builder.appName('telecom').getOrCreate()",
+      "execution_count": 217,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "0901435a0a2629ae61afc51cafb60b7fb2f03761"
+      },
+      "cell_type": "code",
+      "source": "telecom = spark.read.csv('../input/bigml_59c28831336c6604c800002a.csv', header=True)",
+      "execution_count": 218,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "400907376fb98504fd45efa66394bcfdb4fccd1d"
+      },
+      "cell_type": "code",
+      "source": "telecom.printSchema()",
+      "execution_count": 219,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": "root\n |-- state: string (nullable = true)\n |-- account length: string (nullable = true)\n |-- area code: string (nullable = true)\n |-- phone number: string (nullable = true)\n |-- international plan: string (nullable = true)\n |-- voice mail plan: string (nullable = true)\n |-- number vmail messages: string (nullable = true)\n |-- total day minutes: string (nullable = true)\n |-- total day calls: string (nullable = true)\n |-- total day charge: string (nullable = true)\n |-- total eve minutes: string (nullable = true)\n |-- total eve calls: string (nullable = true)\n |-- total eve charge: string (nullable = true)\n |-- total night minutes: string (nullable = true)\n |-- total night calls: string (nullable = true)\n |-- total night charge: string (nullable = true)\n |-- total intl minutes: string (nullable = true)\n |-- total intl calls: string (nullable = true)\n |-- total intl charge: string (nullable = true)\n |-- customer service calls: string (nullable = true)\n |-- churn: string (nullable = true)\n\n",
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "6023590d4728cae8aa0b6ad17195bfaadddfe88e",
+        "scrolled": true
+      },
+      "cell_type": "code",
+      "source": "telecom.count()",
+      "execution_count": 220,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "execution_count": 220,
+          "data": {
+            "text/plain": "3333"
+          },
+          "metadata": {}
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "c7117b582c565e413f9dfaa9e6fab4e9e33d3db8"
+      },
+      "cell_type": "code",
+      "source": "def count_missing(df):\n    return df.agg(\n        *[(1 - fn.count(c)/fn.count('*')).alias(c+'_missing') for c in df.columns]\n    )",
+      "execution_count": 221,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "f0822d95df524da9b98c3efe3517b18bc10cf4a4"
+      },
+      "cell_type": "code",
+      "source": "# count ratio of missing value at each column\ncount_missing(telecom).show()",
+      "execution_count": 222,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": "+-------------+----------------------+-----------------+--------------------+--------------------------+-----------------------+-----------------------------+-------------------------+-----------------------+------------------------+-------------------------+-----------------------+------------------------+---------------------------+-------------------------+--------------------------+--------------------------+------------------------+-------------------------+------------------------------+-------------+\n|state_missing|account length_missing|area code_missing|phone number_missing|international plan_missing|voice mail plan_missing|number vmail messages_missing|total day minutes_missing|total day calls_missing|total day charge_missing|total eve minutes_missing|total eve calls_missing|total eve charge_missing|total night minutes_missing|total night calls_missing|total night charge_missing|total intl minutes_missing|total intl calls_missing|total intl charge_missing|customer service calls_missing|churn_missing|\n+-------------+----------------------+-----------------+--------------------+--------------------------+-----------------------+-----------------------------+-------------------------+-----------------------+------------------------+-------------------------+-----------------------+------------------------+---------------------------+-------------------------+--------------------------+--------------------------+------------------------+-------------------------+------------------------------+-------------+\n|          0.0|                   0.0|              0.0|                 0.0|                       0.0|                    0.0|                          0.0|                      0.0|                    0.0|                     0.0|                      0.0|                    0.0|                     0.0|                        0.0|                      0.0|                       0.0|                       0.0|                     0.0|                      0.0|                           0.0|          0.0|\n+-------------+----------------------+-----------------+--------------------+--------------------------+-----------------------+-----------------------------+-------------------------+-----------------------+------------------------+-------------------------+-----------------------+------------------------+---------------------------+-------------------------+--------------------------+--------------------------+------------------------+-------------------------+------------------------------+-------------+\n\n",
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "32c8ac7c49e01f413a349f0a9604c56591b7de13"
+      },
+      "cell_type": "code",
+      "source": "# convert some sample to pandas df to see some value\ndef to_pandas_sample(df):\n    pd_sample = df.sample(True, 0.01, seed=43).toPandas()\n    return pd_sample",
+      "execution_count": 223,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "4bd8cb689f3a167281f7a6d8af4110b82f2d448e"
+      },
+      "cell_type": "code",
+      "source": "to_pandas_sample(telecom).head(1)",
+      "execution_count": 224,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "execution_count": 224,
+          "data": {
+            "text/plain": "  state account length  ...  customer service calls churn\n0    ID            119  ...                       5  True\n\n[1 rows x 21 columns]",
+            "text/html": "<div>\n<style scoped>\n    .dataframe tbody tr th:only-of-type {\n        vertical-align: middle;\n    }\n\n    .dataframe tbody tr th {\n        vertical-align: top;\n    }\n\n    .dataframe thead th {\n        text-align: right;\n    }\n</style>\n<table border=\"1\" class=\"dataframe\">\n  <thead>\n    <tr style=\"text-align: right;\">\n      <th></th>\n      <th>state</th>\n      <th>account length</th>\n      <th>area code</th>\n      <th>phone number</th>\n      <th>international plan</th>\n      <th>voice mail plan</th>\n      <th>number vmail messages</th>\n      <th>total day minutes</th>\n      <th>total day calls</th>\n      <th>total day charge</th>\n      <th>total eve minutes</th>\n      <th>total eve calls</th>\n      <th>total eve charge</th>\n      <th>total night minutes</th>\n      <th>total night calls</th>\n      <th>total night charge</th>\n      <th>total intl minutes</th>\n      <th>total intl calls</th>\n      <th>total intl charge</th>\n      <th>customer service calls</th>\n      <th>churn</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <th>0</th>\n      <td>ID</td>\n      <td>119</td>\n      <td>415</td>\n      <td>398-1294</td>\n      <td>no</td>\n      <td>no</td>\n      <td>0</td>\n      <td>159.1</td>\n      <td>114</td>\n      <td>27.05</td>\n      <td>231.3</td>\n      <td>117</td>\n      <td>19.66</td>\n      <td>143.2</td>\n      <td>91</td>\n      <td>6.44</td>\n      <td>8.8</td>\n      <td>3</td>\n      <td>2.38</td>\n      <td>5</td>\n      <td>True</td>\n    </tr>\n  </tbody>\n</table>\n</div>"
+          },
+          "metadata": {}
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "1c78463de5fac25dd7a6e53d745e8a0f52bd83ee"
+      },
+      "cell_type": "code",
+      "source": "# check if international plan and voice mail plan only contains yes/no value\nu1 = telecom.select('international plan').distinct().count()\nu2 = telecom.select('voice mail plan').distinct().count()\n\nprint(u1)\nprint(u2)",
+      "execution_count": 225,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": "2\n2\n",
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "dc358413c0be93c69d31cba0db302f414fcd2406"
+      },
+      "cell_type": "code",
+      "source": "to_pandas_sample(telecom).head(1)",
+      "execution_count": 226,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "execution_count": 226,
+          "data": {
+            "text/plain": "  state account length  ...  customer service calls churn\n0    ID            119  ...                       5  True\n\n[1 rows x 21 columns]",
+            "text/html": "<div>\n<style scoped>\n    .dataframe tbody tr th:only-of-type {\n        vertical-align: middle;\n    }\n\n    .dataframe tbody tr th {\n        vertical-align: top;\n    }\n\n    .dataframe thead th {\n        text-align: right;\n    }\n</style>\n<table border=\"1\" class=\"dataframe\">\n  <thead>\n    <tr style=\"text-align: right;\">\n      <th></th>\n      <th>state</th>\n      <th>account length</th>\n      <th>area code</th>\n      <th>phone number</th>\n      <th>international plan</th>\n      <th>voice mail plan</th>\n      <th>number vmail messages</th>\n      <th>total day minutes</th>\n      <th>total day calls</th>\n      <th>total day charge</th>\n      <th>total eve minutes</th>\n      <th>total eve calls</th>\n      <th>total eve charge</th>\n      <th>total night minutes</th>\n      <th>total night calls</th>\n      <th>total night charge</th>\n      <th>total intl minutes</th>\n      <th>total intl calls</th>\n      <th>total intl charge</th>\n      <th>customer service calls</th>\n      <th>churn</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <th>0</th>\n      <td>ID</td>\n      <td>119</td>\n      <td>415</td>\n      <td>398-1294</td>\n      <td>no</td>\n      <td>no</td>\n      <td>0</td>\n      <td>159.1</td>\n      <td>114</td>\n      <td>27.05</td>\n      <td>231.3</td>\n      <td>117</td>\n      <td>19.66</td>\n      <td>143.2</td>\n      <td>91</td>\n      <td>6.44</td>\n      <td>8.8</td>\n      <td>3</td>\n      <td>2.38</td>\n      <td>5</td>\n      <td>True</td>\n    </tr>\n  </tbody>\n</table>\n</div>"
+          },
+          "metadata": {}
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "be10ac6711945ee465172cbf1b8748df018e0761"
+      },
+      "cell_type": "code",
+      "source": "# convert numeric data to integer or double\nint_cols = ['account length', 'area code', 'number vmail messages', \n            'total day calls', 'total eve calls', 'total night calls',\n            'total intl calls', 'customer service calls']\n\ndouble_cols = ['total day minutes', 'total day charge', 'total eve minutes', 'total eve charge', 'total night minutes',\n              'total night charge', 'total intl minutes','total intl charge']\n\ndef cast_data_type(df, list_cols, data_type='double'):\n    for col in list_cols:\n        df = df.withColumn(col, df[col].cast(data_type))\n    return df",
+      "execution_count": 227,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "5fd443c4e70d52608d3a231c9637658af9e6e344"
+      },
+      "cell_type": "code",
+      "source": "telecom_casted = cast_data_type(telecom, int_cols, 'integer')\ntelecom_casted = cast_data_type(telecom_casted, double_cols, 'double')",
+      "execution_count": 228,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "b333903a51c5321351c1797cb8858f8c32e8ec29"
+      },
+      "cell_type": "code",
+      "source": "telecom_casted.printSchema()",
+      "execution_count": 229,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": "root\n |-- state: string (nullable = true)\n |-- account length: integer (nullable = true)\n |-- area code: integer (nullable = true)\n |-- phone number: string (nullable = true)\n |-- international plan: string (nullable = true)\n |-- voice mail plan: string (nullable = true)\n |-- number vmail messages: integer (nullable = true)\n |-- total day minutes: double (nullable = true)\n |-- total day calls: integer (nullable = true)\n |-- total day charge: double (nullable = true)\n |-- total eve minutes: double (nullable = true)\n |-- total eve calls: integer (nullable = true)\n |-- total eve charge: double (nullable = true)\n |-- total night minutes: double (nullable = true)\n |-- total night calls: integer (nullable = true)\n |-- total night charge: double (nullable = true)\n |-- total intl minutes: double (nullable = true)\n |-- total intl calls: integer (nullable = true)\n |-- total intl charge: double (nullable = true)\n |-- customer service calls: integer (nullable = true)\n |-- churn: string (nullable = true)\n\n",
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "68fbcfa7b015ada35989900f02fbddcd374730cd"
+      },
+      "cell_type": "code",
+      "source": "# one-hot encoder categorical data\nstages = []\n\ncate_cols = ['state', 'international plan','voice mail plan']\nfor col in cate_cols:\n    indexer = StringIndexer(inputCol=col, outputCol=col+'_index')\n    encoder = OneHotEncoder(inputCol=col+'_index', outputCol=col+'_fact')\n    stages.append(indexer)\n    #stages.append(encoder)",
+      "execution_count": 230,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "02b18f0909b96812bed26682d0179ee76f1d0cda"
+      },
+      "cell_type": "code",
+      "source": "# assemble to 1 column feature\nfeature_cols = ['state_index', 'account length', 'area code', 'international plan_index', 'voice mail plan_index', \n                'number vmail messages', 'total day minutes', 'total day calls', 'total day charge', \n                'total eve minutes', 'total eve calls', 'total eve charge', 'total night minutes', \n                'total night calls', 'total night charge', 'total intl minutes', 'total intl calls', \n                'total intl charge', 'customer service calls']\n\nprint(feature_cols)",
+      "execution_count": 231,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": "['state_fact', 'account length', 'area code', 'international plan_fact', 'voice mail plan_fact', 'number vmail messages', 'total day minutes', 'total day calls', 'total day charge', 'total eve minutes', 'total eve calls', 'total eve charge', 'total night minutes', 'total night calls', 'total night charge', 'total intl minutes', 'total intl calls', 'total intl charge', 'customer service calls']\n",
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "ac3f2203adb727498e3cdb1a69bf122484b2d3b8"
+      },
+      "cell_type": "code",
+      "source": "vec_assemble = VectorAssembler(inputCols=feature_cols, outputCol='features')\nstages.append(vec_assemble)",
+      "execution_count": 232,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "fe331a56ebf8a73e3ad5db1003236e9fc47e9b24"
+      },
+      "cell_type": "code",
+      "source": "def boolean_to_int(x):\n    return 1 if x == 'True' else 0",
+      "execution_count": 233,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "5371a5379d431c58270c3946343197ace8b44a63"
+      },
+      "cell_type": "code",
+      "source": "boolean_to_int_udf = fn.udf(boolean_to_int, 'integer')",
+      "execution_count": 234,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "af3ccc266901f4b796036b69d9544a894b03f64e"
+      },
+      "cell_type": "code",
+      "source": "# convert churn label to 0 and 1\ntelecom_casted = telecom_casted.withColumn('churn', boolean_to_int_udf('churn'))",
+      "execution_count": 235,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "3b2a2a147248496fc397298081ef070f6d80d97e"
+      },
+      "cell_type": "code",
+      "source": "telecom_casted = telecom_casted.withColumnRenamed('churn', 'label')",
+      "execution_count": 236,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "ce437ea73a8d72a4d993a34a8488666a574cd544"
+      },
+      "cell_type": "code",
+      "source": "telecom_casted.printSchema()",
+      "execution_count": 237,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": "root\n |-- state: string (nullable = true)\n |-- account length: integer (nullable = true)\n |-- area code: integer (nullable = true)\n |-- phone number: string (nullable = true)\n |-- international plan: string (nullable = true)\n |-- voice mail plan: string (nullable = true)\n |-- number vmail messages: integer (nullable = true)\n |-- total day minutes: double (nullable = true)\n |-- total day calls: integer (nullable = true)\n |-- total day charge: double (nullable = true)\n |-- total eve minutes: double (nullable = true)\n |-- total eve calls: integer (nullable = true)\n |-- total eve charge: double (nullable = true)\n |-- total night minutes: double (nullable = true)\n |-- total night calls: integer (nullable = true)\n |-- total night charge: double (nullable = true)\n |-- total intl minutes: double (nullable = true)\n |-- total intl calls: integer (nullable = true)\n |-- total intl charge: double (nullable = true)\n |-- customer service calls: integer (nullable = true)\n |-- label: integer (nullable = true)\n\n",
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "1e5515bd6387f3508d46f0f5e0955744714bbf08"
+      },
+      "cell_type": "code",
+      "source": "# apply all transformation to data\npipeline = Pipeline(stages=stages)\npipe_data = pipeline.fit(telecom_casted).transform(telecom_casted)",
+      "execution_count": 238,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "1ed216e23b9e7b425c6e55873e65d8358826965c"
+      },
+      "cell_type": "code",
+      "source": "# split train and test\ntrain, test = pipe_data.randomSplit([.7, .3])",
+      "execution_count": 239,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "549a6d4f8cf7de63ebd6af74e96c28ac4a1f89c1"
+      },
+      "cell_type": "code",
+      "source": "# logistic\nlogistic = LogisticRegression()",
+      "execution_count": 240,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "96bb42175f169a54a869e96650db49faa9cb0f8c"
+      },
+      "cell_type": "code",
+      "source": "# Evaluation metrics\nevaluator = evals.BinaryClassificationEvaluator(rawPredictionCol='probability')",
+      "execution_count": 241,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "de9d3dbc99b0daa8d54d88d5adb566bf81341931"
+      },
+      "cell_type": "code",
+      "source": "# tuner\ngrid = tune.ParamGridBuilder().addGrid(logistic.maxIter, [2,10,50]).addGrid(logistic.regParam, [0.01,0.05,0.3]).build()\n                                    ",
+      "execution_count": 242,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "5fd008507a832ada9715846216db9db4428328cf"
+      },
+      "cell_type": "code",
+      "source": "# cross validator\ncv = tune.CrossValidator(estimator=logistic,\n                        estimatorParamMaps=grid,\n                        evaluator=evaluator,\n                        numFolds=7)",
+      "execution_count": 243,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "e45ba9d4834242830e3f20675425eacb00379b6f"
+      },
+      "cell_type": "code",
+      "source": "# fit to cross validator\ncv_Models = cv.fit(train)\n",
+      "execution_count": 244,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "2b0ffa9cfb84fbb2e5e50c9b6c934e372d3e71a7"
+      },
+      "cell_type": "code",
+      "source": "best_model = cv_Models.bestModel",
+      "execution_count": 245,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "11eb6d9e9f599db2356f067e0f8a6204d746713c"
+      },
+      "cell_type": "code",
+      "source": "acc_score = best_model.evaluate(dataset=train).accuracy\nacc_score",
+      "execution_count": 246,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "execution_count": 246,
+          "data": {
+            "text/plain": "0.862937660119556"
+          },
+          "metadata": {}
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "b424c0391e6df8e94fc2940a99fcd555d49a3f27"
+      },
+      "cell_type": "code",
+      "source": "pred = best_model.transform(dataset=train)",
+      "execution_count": 247,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "3daacb3ed6b5ec408e81fcae87c6f7ad240068bc"
+      },
+      "cell_type": "code",
+      "source": "pred.printSchema()",
+      "execution_count": 248,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": "root\n |-- state: string (nullable = true)\n |-- account length: integer (nullable = true)\n |-- area code: integer (nullable = true)\n |-- phone number: string (nullable = true)\n |-- international plan: string (nullable = true)\n |-- voice mail plan: string (nullable = true)\n |-- number vmail messages: integer (nullable = true)\n |-- total day minutes: double (nullable = true)\n |-- total day calls: integer (nullable = true)\n |-- total day charge: double (nullable = true)\n |-- total eve minutes: double (nullable = true)\n |-- total eve calls: integer (nullable = true)\n |-- total eve charge: double (nullable = true)\n |-- total night minutes: double (nullable = true)\n |-- total night calls: integer (nullable = true)\n |-- total night charge: double (nullable = true)\n |-- total intl minutes: double (nullable = true)\n |-- total intl calls: integer (nullable = true)\n |-- total intl charge: double (nullable = true)\n |-- customer service calls: integer (nullable = true)\n |-- label: integer (nullable = true)\n |-- state_index: double (nullable = false)\n |-- state_fact: vector (nullable = true)\n |-- international plan_index: double (nullable = false)\n |-- international plan_fact: vector (nullable = true)\n |-- voice mail plan_index: double (nullable = false)\n |-- voice mail plan_fact: vector (nullable = true)\n |-- features: vector (nullable = true)\n |-- rawPrediction: vector (nullable = true)\n |-- probability: vector (nullable = true)\n |-- prediction: double (nullable = false)\n\n",
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "b961a5af7877eaacf6b60ef50973fc1fc1153dc3"
+      },
+      "cell_type": "code",
+      "source": "pred.filter(fn.col('label')==1).select(*['rawPrediction', 'probability', 'label', 'prediction']).sample(False, 0.1).show()",
+      "execution_count": 249,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": "+--------------------+--------------------+-----+----------+\n|       rawPrediction|         probability|label|prediction|\n+--------------------+--------------------+-----+----------+\n|[2.01691914104582...|[0.88256206576326...|    1|       0.0|\n|[0.24397917888983...|[0.56069402111125...|    1|       0.0|\n|[0.79761917323349...|[0.68946496898672...|    1|       0.0|\n|[1.52574961884067...|[0.82138358136222...|    1|       0.0|\n|[-0.3919519133808...|[0.40324750573448...|    1|       1.0|\n|[1.06448651218027...|[0.74354698964691...|    1|       0.0|\n|[1.12792261679826...|[0.75545532165957...|    1|       0.0|\n|[0.98261736650703...|[0.72762725024344...|    1|       0.0|\n|[0.97639958814346...|[0.72639323207253...|    1|       0.0|\n|[0.92172519242516...|[0.71539349510022...|    1|       0.0|\n|[1.04574015431237...|[0.73995605326374...|    1|       0.0|\n|[-0.3183676294360...|[0.42107362049739...|    1|       1.0|\n|[0.96314122087336...|[0.72375028887097...|    1|       0.0|\n|[1.61434920869665...|[0.83401434156763...|    1|       0.0|\n|[0.46061727331217...|[0.61316060030741...|    1|       0.0|\n|[0.22554684688770...|[0.55614888236554...|    1|       0.0|\n|[-0.2055885257329...|[0.44878313867632...|    1|       1.0|\n|[-0.6212045785982...|[0.34950753842798...|    1|       1.0|\n|[0.34219167948837...|[0.58472280965663...|    1|       0.0|\n|[0.50977280686442...|[0.62475321358387...|    1|       0.0|\n+--------------------+--------------------+-----+----------+\nonly showing top 20 rows\n\n",
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "e11ce1c4b0f18ca013fd8425a27516c68fd30d1f"
+      },
+      "cell_type": "code",
+      "source": "pred.filter(fn.col('label')==1).count()",
+      "execution_count": 250,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "execution_count": 250,
+          "data": {
+            "text/plain": "346"
+          },
+          "metadata": {}
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "5bc9a7c3798fcd3ef580c728c0ad40dd86c509a0"
+      },
+      "cell_type": "code",
+      "source": "pred.filter(fn.col('label')==0).count()",
+      "execution_count": 251,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "execution_count": 251,
+          "data": {
+            "text/plain": "1996"
+          },
+          "metadata": {}
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "cf9d4d5376b71ef3ad87886c2b65855c3aac8e86"
+      },
+      "cell_type": "code",
+      "source": "dt = DecisionTreeClassifier()\ndt_model = dt.fit(train)\n\n# grid = tune.ParamGridBuilder().addGrid(dt.max)",
+      "execution_count": 255,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "d3a17fd99cd6d0bad0acfe1b5277a2f672633bd4"
+      },
+      "cell_type": "code",
+      "source": "pred_dt = dt_model.transform(train)\nscore = evaluator.evaluate(pred_dt)",
+      "execution_count": 259,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "d70d376e1c927cc933f2cca2f47f9f1de2eaf49b"
+      },
+      "cell_type": "code",
+      "source": "score",
+      "execution_count": 260,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "execution_count": 260,
+          "data": {
+            "text/plain": "0.9232974619759751"
+          },
+          "metadata": {}
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "d96fc92fcdda5b50cacbab7762ee5c53727262ea"
+      },
+      "cell_type": "code",
+      "source": "pred_dt.filter(fn.col('label')==1).select(*['rawPrediction', 'probability', 'label', 'prediction']).sample(False, 0.1).show()",
+      "execution_count": 261,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": "+-------------+--------------------+-----+----------+\n|rawPrediction|         probability|label|prediction|\n+-------------+--------------------+-----+----------+\n|   [5.0,62.0]|[0.07462686567164...|    1|       1.0|\n|   [5.0,62.0]|[0.07462686567164...|    1|       1.0|\n|   [1.0,10.0]|[0.09090909090909...|    1|       1.0|\n|   [0.0,41.0]|           [0.0,1.0]|    1|       1.0|\n|   [0.0,41.0]|           [0.0,1.0]|    1|       1.0|\n|    [1.0,2.0]|[0.33333333333333...|    1|       1.0|\n|[1363.0,30.0]|[0.97846374730796...|    1|       0.0|\n|   [0.0,28.0]|           [0.0,1.0]|    1|       1.0|\n|   [0.0,28.0]|           [0.0,1.0]|    1|       1.0|\n|   [5.0,62.0]|[0.07462686567164...|    1|       1.0|\n|  [109.0,8.0]|[0.93162393162393...|    1|       0.0|\n|  [136.0,9.0]|[0.93793103448275...|    1|       0.0|\n|   [5.0,62.0]|[0.07462686567164...|    1|       1.0|\n|   [5.0,62.0]|[0.07462686567164...|    1|       1.0|\n|[1363.0,30.0]|[0.97846374730796...|    1|       0.0|\n|   [0.0,59.0]|           [0.0,1.0]|    1|       1.0|\n|[1363.0,30.0]|[0.97846374730796...|    1|       0.0|\n|   [0.0,41.0]|           [0.0,1.0]|    1|       1.0|\n|   [5.0,62.0]|[0.07462686567164...|    1|       1.0|\n|   [0.0,41.0]|           [0.0,1.0]|    1|       1.0|\n+-------------+--------------------+-----+----------+\nonly showing top 20 rows\n\n",
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "d8ba9b2bd07f5ecba809d5c38fe1794c245a6879"
+      },
+      "cell_type": "code",
+      "source": "# test score\ntest_score = evaluator.evaluate(dt_model.transform(test))",
+      "execution_count": 262,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "b290943f63d69c31cf13110fa24e24186cb5cef0"
+      },
+      "cell_type": "code",
+      "source": "test_score",
+      "execution_count": 263,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "execution_count": 263,
+          "data": {
+            "text/plain": "0.866903707755688"
+          },
+          "metadata": {}
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "8cd148d5774c25f2929cb8b33ebe6b8d374594c1"
+      },
+      "cell_type": "code",
+      "source": "def get_accuracy(df):\n    true_pred = dt_model.transform(df).filter(fn.col('label')==fn.col('prediction')).count()\n    all_pred = dt_model.transform(df).count()\n    return true_pred/all_pred",
+      "execution_count": 269,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "473d67d0a82e53c8b0fcd64c161c2362e2bbabc1"
+      },
+      "cell_type": "code",
+      "source": "print(\"decision tree train accuracy: \", get_accuracy(train))\nprint(\"decision tree test accuracy: \", get_accuracy(test))",
+      "execution_count": 270,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": "decision tree train accuracy:  0.9470538001707942\ndecision tree test accuracy:  0.9323915237134208\n",
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "f26c22f3e0f4bb3980f33e9d118ed2fd8b9026c0"
+      },
+      "cell_type": "code",
+      "source": "",
+      "execution_count": null,
+      "outputs": []
+    }
+  ],
+  "metadata": {
+    "kernelspec": {
+      "display_name": "Python 3",
+      "language": "python",
+      "name": "python3"
+    },
+    "language_info": {
+      "name": "python",
+      "version": "3.6.6",
+      "mimetype": "text/x-python",
+      "codemirror_mode": {
+        "name": "ipython",
+        "version": 3
+      },
+      "pygments_lexer": "ipython3",
+      "nbconvert_exporter": "python",
+      "file_extension": ".py"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 1
+}
