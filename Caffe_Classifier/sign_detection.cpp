@@ -91,7 +91,7 @@ void test_process(){
         resize(frame, eval_frame, Size(320,240));
         
         int label = evaluate_frame_visual(eval_frame);
-        key = waitKey(40);
+        key = waitKey(10);
         if(key == 's'){
             waitKey(0);
         }
@@ -240,7 +240,7 @@ vector<MatArea> api_traffic_sign_detection_visual(Mat& src) {
 
     imshow("norm_img: ", convert(hsv));
 
-    cout << "size of vec candidates: " <<result.size()<<endl;
+    //cout << "size of vec candidates: " <<result.size()<<endl;
     return result;
 }
 
@@ -442,7 +442,7 @@ Mat ROI(Mat src, int x, int y, int width, int height) {
 
 Mat convert(Mat src) {
     Mat dst;
-    cvtColor(src, dst, CV_HSV2BGR);
+    cvtColor(src, dst, COLOR_HSV2BGR);
     return dst;
 }
 
@@ -451,7 +451,7 @@ Mat normalizeI(const Mat& src) {
     int rangeH, rangeS, rangeV;
     Mat dst;
     //convert to hsv
-    cvtColor(src,dst, CV_BGR2HSV);
+    cvtColor(src,dst, COLOR_BGR2HSV);
 
     /*============DEFINE RANGE FOR HUE COLOR==============*/
     int max_hue = 179;

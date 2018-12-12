@@ -22,9 +22,9 @@ using std::string;
 /* Pair (label, confidence) representing a prediction. */
 typedef std::pair<string, float> Prediction;
 
-string model_file = "model/deploy.prototxt";
-string trained_file = "model/_iter_717.caffemodel";
-string mean_file = "model/bienbao_train_mean.binaryproto";
+string model_file = "model/lenet.prototxt";
+string trained_file = "model/_iter_3835.caffemodel";
+string mean_file = "model/data_mean.binaryproto";
 string label_file = "model/synset_words.txt";
 
 class Classifier {
