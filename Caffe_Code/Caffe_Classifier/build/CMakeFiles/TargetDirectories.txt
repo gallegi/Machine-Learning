@@ -1,3 +1,0 @@
-/home/namntse05438/Machine-Learning/Caffe_Classifier/build/CMakeFiles/rebuild_cache.dir
-/home/namntse05438/Machine-Learning/Caffe_Classifier/build/CMakeFiles/classify_bien_bao.dir
-/home/namntse05438/Machine-Learning/Caffe_Classifier/build/CMakeFiles/edit_cache.dir
