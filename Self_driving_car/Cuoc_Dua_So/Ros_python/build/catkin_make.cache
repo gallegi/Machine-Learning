@@ -1,0 +1,2 @@
+drive_car
+-DCATKIN_DEVEL_PREFIX=/home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/devel -DCMAKE_INSTALL_PREFIX=/home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/install -G Unix Makefiles
