@@ -28,12 +28,12 @@ def main(args):
 
     # listener object to get image streamed back from simulator
     listener = ImageListener()
-    
-    # car object to control the car (speed, steer)
-    car = Car(listener)
 
     # traffic sign detector object to detect current traffic sign
     sign_detector = Traffic_Sign_Detector(listener)
+
+    # car object to control the car (speed, steer)
+    car = Car(listener, sign_detector)
 
     # check if drive manually
     if(manual):

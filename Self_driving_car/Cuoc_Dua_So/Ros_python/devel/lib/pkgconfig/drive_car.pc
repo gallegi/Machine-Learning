@@ -1,8 +1,8 @@
-prefix=/home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/devel
+prefix=/home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/devel
 
 Name: drive_car
 Description: Description of drive_car
 Version: 0.0.0
 Cflags: 
-Libs: -L/home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/devel/lib 
+Libs: -L/home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/devel/lib 
 Requires: 

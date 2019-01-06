@@ -1,8 +1,8 @@
-# Install script for directory: /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/src/drive_car
+# Install script for directory: /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/src/drive_car
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "/home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/install")
+  set(CMAKE_INSTALL_PREFIX "/home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/install")
 endif()
 string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
@@ -38,17 +38,17 @@ if(NOT DEFINED CMAKE_CROSSCOMPILING)
 endif()
 
 if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig" TYPE FILE FILES "/home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/build/drive_car/catkin_generated/installspace/drive_car.pc")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig" TYPE FILE FILES "/home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/build/drive_car/catkin_generated/installspace/drive_car.pc")
 endif()
 
 if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/drive_car/cmake" TYPE FILE FILES
-    "/home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/build/drive_car/catkin_generated/installspace/drive_carConfig.cmake"
-    "/home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/build/drive_car/catkin_generated/installspace/drive_carConfig-version.cmake"
+    "/home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/build/drive_car/catkin_generated/installspace/drive_carConfig.cmake"
+    "/home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/build/drive_car/catkin_generated/installspace/drive_carConfig-version.cmake"
     )
 endif()
 
 if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/drive_car" TYPE FILE FILES "/home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/src/drive_car/package.xml")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/drive_car" TYPE FILE FILES "/home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/src/drive_car/package.xml")
 endif()
 

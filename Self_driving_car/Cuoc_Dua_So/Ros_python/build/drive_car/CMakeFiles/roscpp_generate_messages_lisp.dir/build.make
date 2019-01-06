@@ -43,10 +43,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/src
+CMAKE_SOURCE_DIR = /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/src
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/build
+CMAKE_BINARY_DIR = /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/build
 
 # Utility rule file for roscpp_generate_messages_lisp.
 
@@ -63,10 +63,10 @@ drive_car/CMakeFiles/roscpp_generate_messages_lisp.dir/build: roscpp_generate_me
 .PHONY : drive_car/CMakeFiles/roscpp_generate_messages_lisp.dir/build
 
 drive_car/CMakeFiles/roscpp_generate_messages_lisp.dir/clean:
-	cd /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/build/drive_car && $(CMAKE_COMMAND) -P CMakeFiles/roscpp_generate_messages_lisp.dir/cmake_clean.cmake
+	cd /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/build/drive_car && $(CMAKE_COMMAND) -P CMakeFiles/roscpp_generate_messages_lisp.dir/cmake_clean.cmake
 .PHONY : drive_car/CMakeFiles/roscpp_generate_messages_lisp.dir/clean
 
 drive_car/CMakeFiles/roscpp_generate_messages_lisp.dir/depend:
-	cd /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/src /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/src/drive_car /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/build /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/build/drive_car /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/build/drive_car/CMakeFiles/roscpp_generate_messages_lisp.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/src /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/src/drive_car /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/build /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/build/drive_car /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/build/drive_car/CMakeFiles/roscpp_generate_messages_lisp.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : drive_car/CMakeFiles/roscpp_generate_messages_lisp.dir/depend
 

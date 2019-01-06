@@ -4,5 +4,5 @@ PROJECT_PKG_CONFIG_INCLUDE_DIRS = "".split(';') if "" != "" else []
 PROJECT_CATKIN_DEPENDS = "".replace(';', ' ')
 PKG_CONFIG_LIBRARIES_WITH_PREFIX = "".split(';') if "" != "" else []
 PROJECT_NAME = "drive_car"
-PROJECT_SPACE_DIR = "/home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/devel"
+PROJECT_SPACE_DIR = "/home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/devel"
 PROJECT_VERSION = "0.0.0"

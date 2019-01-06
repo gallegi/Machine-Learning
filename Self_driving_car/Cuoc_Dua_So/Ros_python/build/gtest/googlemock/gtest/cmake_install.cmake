@@ -2,7 +2,7 @@
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "/home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/install")
+  set(CMAKE_INSTALL_PREFIX "/home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/install")
 endif()
 string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 

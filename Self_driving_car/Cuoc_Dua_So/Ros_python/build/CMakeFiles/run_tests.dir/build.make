@@ -43,10 +43,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/src
+CMAKE_SOURCE_DIR = /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/src
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/build
+CMAKE_BINARY_DIR = /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/build
 
 # Utility rule file for run_tests.
 
@@ -67,6 +67,6 @@ CMakeFiles/run_tests.dir/clean:
 .PHONY : CMakeFiles/run_tests.dir/clean
 
 CMakeFiles/run_tests.dir/depend:
-	cd /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/src /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/src /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/build /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/build /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/build/CMakeFiles/run_tests.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/src /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/src /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/build /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/build /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/build/CMakeFiles/run_tests.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/run_tests.dir/depend
 

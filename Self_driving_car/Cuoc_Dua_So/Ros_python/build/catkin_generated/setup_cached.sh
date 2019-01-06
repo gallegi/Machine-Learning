@@ -7,9 +7,5 @@
 # new environment variables
 
 # modified environment variables
-export CMAKE_PREFIX_PATH="/home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/devel:$CMAKE_PREFIX_PATH"
-export LD_LIBRARY_PATH="/home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/devel/lib:/opt/ros/melodic/lib:/usr/local/cuda-9.0/lib64"
-export PWD="/home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/build"
-export PYTHONPATH="/opt/ros/melodic/lib/python2.7/dist-packages:/home/tensorflow/models:/home/tensorflow/models/research/slim/"
-export ROSLISP_PACKAGE_DIRECTORIES="/home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/devel/share/common-lisp"
-export ROS_PACKAGE_PATH="/home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/src:$ROS_PACKAGE_PATH"
+export PWD="/home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/build"
+export ROS_PACKAGE_PATH="/home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/src:/home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/src:/opt/ros/melodic/share"

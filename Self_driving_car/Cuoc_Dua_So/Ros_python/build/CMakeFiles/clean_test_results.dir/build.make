@@ -43,10 +43,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/src
+CMAKE_SOURCE_DIR = /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/src
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/build
+CMAKE_BINARY_DIR = /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/build
 
 # Utility rule file for clean_test_results.
 
@@ -54,7 +54,7 @@ CMAKE_BINARY_DIR = /home/namntse05438/Machine-Learning/Self_driving_car/Ros_pyth
 include CMakeFiles/clean_test_results.dir/progress.make
 
 CMakeFiles/clean_test_results:
-	/usr/bin/python2 /opt/ros/melodic/share/catkin/cmake/test/remove_test_results.py /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/build/test_results
+	/usr/bin/python2 /opt/ros/melodic/share/catkin/cmake/test/remove_test_results.py /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/build/test_results
 
 clean_test_results: CMakeFiles/clean_test_results
 clean_test_results: CMakeFiles/clean_test_results.dir/build.make
@@ -71,6 +71,6 @@ CMakeFiles/clean_test_results.dir/clean:
 .PHONY : CMakeFiles/clean_test_results.dir/clean
 
 CMakeFiles/clean_test_results.dir/depend:
-	cd /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/src /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/src /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/build /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/build /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/build/CMakeFiles/clean_test_results.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/src /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/src /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/build /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/build /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/build/CMakeFiles/clean_test_results.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/clean_test_results.dir/depend
 

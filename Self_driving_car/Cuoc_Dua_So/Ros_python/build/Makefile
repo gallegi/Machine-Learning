@@ -48,10 +48,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/src
+CMAKE_SOURCE_DIR = /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/src
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/build
+CMAKE_BINARY_DIR = /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -137,9 +137,9 @@ test/fast: test
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/build/CMakeFiles /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/build/CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/build/CMakeFiles /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/build/CMakeFiles/progress.marks
 	$(MAKE) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/namntse05438/Machine-Learning/Self_driving_car/Ros_python/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/namntse05438/Machine-Learning/Self_driving_car/Cuoc_Dua_So/Ros_python/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target

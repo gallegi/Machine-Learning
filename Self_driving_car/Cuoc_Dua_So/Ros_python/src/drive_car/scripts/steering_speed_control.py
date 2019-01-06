@@ -56,7 +56,7 @@ classes = ['neg','left','right','stop']
 
 #============================= CAR BEHAVIOURAL CLONING CLASS ==========================
 class Car:
-    def __init__(self, listener):
+    def __init__(self, listener, sign_detector):
         # some common variable to control the car
         self.speed = MAX_SPEED
         self.steer = 0
@@ -67,7 +67,11 @@ class Car:
         self.speed_pub = rospy.Publisher("Team1_speed",Float32,queue_size=10)
         self.steerAngle_pub = rospy.Publisher("Team1_steerAngle",Float32,queue_size=10)
 
+        # image listener get current frame
         self.listener = listener
+
+        # traffic sign detector to get current traffic sign
+        self.sign_detector = sign_detector
 
         # define model
         self.model = Sequential()
@@ -79,13 +83,15 @@ class Car:
         self.model.add(Conv2D(64, 3, 3, activation='elu'))
         self.model.add(Dropout(0.3))
         self.model.add(Flatten())
-        self.model.add(Dense(100, activation='elu'))
-        self.model.add(Dense(50, activation='elu'))
-        self.model.add(Dense(10, activation='elu'))
+        self.model.add(Dense(128, activation='elu'))
+        self.model.add(Dense(64, activation='elu'))
+        self.model.add(Dense(32, activation='elu'))
         self.model.add(Dense(1))
 
-        self.model.load_weights("models/my_model_4.h5")
-        img = cv2.imread("traffic_sign_data/1545920226.12_50_2.96335988903.jpg")
+        # load model's pretrained weight
+        self.model.load_weights("models/my_model_01_04_14_05.h5")
+
+        img = cv2.imread("/home/namntse05438/Cuoc_Dua_So/Ros_python/traffic_sign_data/1545984670.3_50_0.0.jpg")
 
         res = self.model.predict(img.reshape(1,240,320,3))
         print(res)
@@ -101,7 +107,15 @@ class Car:
             cv2.imshow('color', img)
             cv2.waitKey(1)
             self.steer = float(self.model.predict(img.reshape(1,240,320,3)))
-            print(self.steer)
+            #print(self.steer)
+
+            if(self.sign_detector.sign == 1):
+                self.steer -= 15
+                print("Turn left")
+            elif(self.sign_detector.sign == 2):
+                self.steer += 15
+                print("Turn right")
+
             self.speed_pub.publish(self.speed)
             self.steerAngle_pub.publish(self.steer)
 
@@ -193,25 +207,25 @@ class Traffic_Sign_Detector:
         ssd_loss = SSDLoss(neg_pos_ratio=3, alpha=1.0)
         self.model.compile(optimizer=adam, loss=ssd_loss.compute_loss)
 
-        # img = cv2.imread("/home/namntse05438/Cuoc_Dua_So/Ros_python/traffic_sign_data/1545920226.49_50_1.54542034912e-05.jpg")
-        # img = self.preprocessing(img)
-        # rgb_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = cv2.imread("/home/namntse05438/Cuoc_Dua_So/Ros_python/traffic_sign_data/1545920226.49_50_1.54542034912e-05.jpg")
+        img = self.preprocessing(img)
+        rgb_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-        # y_pred_decoded = self.get_ypred_decoded(rgb_img.reshape(1, img_height, img_width, 3))
-        # print(y_pred_decoded[0])
-        # for box in y_pred_decoded[0]:
-        #     xmin = int(box[-4])
-        #     ymin = int(box[-3])
-        #     xmax = int(box[-2])
-        #     ymax = int(box[-1])
-        #     label = '{}: {:.2f}'.format(classes[int(box[0])], box[1])
-        #     print(label)
-        #     #draw bounding box
-        #     cv2.rectangle(img, (xmin, ymin), (xmax,ymax), (0,0,255), 2)
-        #     cv2.putText(img, str(label), (xmin,ymin+20), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0,0,0), 2, cv2.LINE_AA)
+        y_pred_decoded = self.get_ypred_decoded(rgb_img.reshape(1, img_height, img_width, 3))
+        print(y_pred_decoded[0])
+        for box in y_pred_decoded[0]:
+            xmin = int(box[-4])
+            ymin = int(box[-3])
+            xmax = int(box[-2])
+            ymax = int(box[-1])
+            label = '{}: {:.2f}'.format(classes[int(box[0])], box[1])
+            print(label)
+            #draw bounding box
+            cv2.rectangle(img, (xmin, ymin), (xmax,ymax), (0,0,255), 2)
+            cv2.putText(img, str(label), (xmin,ymin+20), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0,0,0), 2, cv2.LINE_AA)
         
         # cv2.imshow('traffic_sign_test', img)
-        # cv2.waitKey(1)
+        cv2.waitKey(1)
 
     # processing image to match the required input of ssd7 model
     def preprocessing(self, cv_img):
@@ -255,6 +269,10 @@ class Traffic_Sign_Detector:
                 ymax = int(box[-1])
                 label = '{}: {:.2f}'.format(classes[int(box[0])], box[1])
                 print(label)
+
+                # set current traffic sign
+                self.sign = int(box[0])
+
                 #draw bounding box
                 cv2.rectangle(img, (xmin, ymin), (xmax,ymax), (255,255,255), 2)
                 cv2.putText(img, str(label), (xmax,ymax), cv2.FONT_HERSHEY_COMPLEX, 1, (255,255,255), 2, cv2.LINE_AA)
